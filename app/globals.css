@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #__next {
+  height: 100%;
+}
+
+body {
+  @apply bg-[#f5f0e8] text-[#171412] antialiased;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+:focus-visible {
+  @apply outline-none ring-2 ring-[#7b1e32] ring-offset-2;
+}
+
+h1, h2, h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+}

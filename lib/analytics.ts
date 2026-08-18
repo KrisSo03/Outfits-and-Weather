@@ -1,0 +1,19 @@
+import { getInteractionEvents, getSensorReadings, getTravelQueries } from './google-sheets'
+const mean = (values: number[]) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
+const numbers = (rows: Record<string, unknown>[], key: string) => rows.map((row) => Number(row[key])).filter(Number.isFinite)
+const distribution = (values: string[]) => Object.entries(values.reduce<Record<string, number>>((acc, value) => { const key = value || 'Sin dato'; acc[key] = (acc[key] ?? 0) + 1; return acc }, {})).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
+
+export async function computeAnalytics() {
+  const [readings, queries, events] = await Promise.all([getSensorReadings(), getTravelQueries(), getInteractionEvents()])
+  const temps = readings.map((r) => r.indoor_temperature), hums = readings.map((r) => r.indoor_humidity), pressures = readings.map((r) => r.indoor_pressure)
+  const rainCount = queries.filter((q) => Number(q.precipitation_probability) >= 60).length
+  const colderCount = queries.filter((q) => Number(q.temperature_difference) < 0).length
+  const factors = { lluvia: rainCount, viento: queries.filter((q) => Number(q.wind_speed) >= 20).length, uv: queries.filter((q) => Number(q.uv_index) >= 6).length, cambioTermico: queries.filter((q) => Math.abs(Number(q.temperature_difference)) >= 5).length }
+  const dominantFactor = Object.entries(factors).sort((a, b) => b[1] - a[1])[0]
+  return {
+    sensors: { total: readings.length, temperatureAverage: mean(temps), temperatureMin: temps.length ? Math.min(...temps) : null, temperatureMax: temps.length ? Math.max(...temps) : null, humidityAverage: mean(hums), pressureAverage: mean(pressures), comfortDistribution: distribution(readings.map((r) => r.comfort_status)), history: readings.slice(-50) },
+    travel: { total: queries.length, topDestinations: distribution(queries.map((q) => q.destination_name)).slice(0, 5), styles: distribution(queries.map((q) => q.style_preference)), genders: distribution(queries.map((q) => q.gender_preference)), outfitCategories: distribution(queries.map((q) => q.outfit_category)), rainPercentage: queries.length ? rainCount / queries.length * 100 : 0, averageTemperatureDifference: mean(numbers(queries, 'temperature_difference')), recent: queries.slice(-10).reverse(), colderPercentage: queries.length ? colderCount / queries.length * 100 : 0, dominantFactor: dominantFactor?.[1] ? dominantFactor[0] : null },
+    ux: { totalEvents: events.length, sessions: new Set(events.map(event=>event.session_id)).size, eventDistribution: distribution(events.map(event=>event.event_name)), quizCompletionRate: events.filter(event=>event.event_name==='quiz_started').length ? events.filter(event=>event.event_name==='quiz_completed').length/events.filter(event=>event.event_name==='quiz_started').length*100 : 0, recommendationCompletionRate: events.filter(event=>event.event_name==='destination_search_started').length ? events.filter(event=>event.event_name==='recommendation_generated').length/events.filter(event=>event.event_name==='destination_search_started').length*100 : 0, averageRecommendationTimeMs: mean(events.filter(event=>event.event_name==='recommendation_generated').map(event=>Number(event.duration_ms)).filter(Number.isFinite)), validationErrors: events.filter(event=>event.event_name==='validation_error').length },
+    insights: [`La temperatura promedio registrada por el ESP32 fue de ${mean(temps)?.toFixed(1) ?? '—'} °C.`, queries.length ? `El ${(colderCount / queries.length * 100).toFixed(0)} % de las consultas implicó un destino más frío que el origen.` : 'Aún no hay consultas de viaje para comparar.', dominantFactor?.[1] ? `${dominantFactor[0]} fue el factor meteorológico que más activó reglas.` : 'Aún no hay suficientes consultas para identificar el factor dominante.']
+  }
+}
