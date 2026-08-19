@@ -59,19 +59,7 @@ La telemetría requiere consentimiento explícito y puede rechazarse sin limitar
 
 ## Despliegue gratuito en Vercel
 
-Importe el repositorio en Vercel, conserve el preset Next.js, agregue las cinco variables en **Settings → Environment Variables** y despliegue. No prefije ninguna con `NEXT_PUBLIC_`. La hoja debe continuar compartida solo con la Service Account. Vercel ejecutará `npm run build`.
+Importe el repositorio en Vercel, conserve el preset Next.js, agregue las cinco variables en **Settings → Environment Variables** y despliegue. No prefije ninguna con `NEXT_PUBLIC_`. La hoja debe continuar compartida solo con la Service Account. Vercel ejecutará `npm run build`. https://outfits-and-weather.vercel.app 
 
-## Demostración académica
-
-1. Muestre una lectura nueva de Wokwi y actualice la tarjeta.
-2. Busque y seleccione un destino; elija llegada y preferencias.
-3. Explique la comparación, las reglas activadas y el enlace de inspiración.
-4. Abra la analítica para relacionar las diferencias térmicas con las categorías recomendadas.
-
-## Capturas
-
-- `[pendiente]` Pantalla principal y lectura del ESP32.
-- `[pendiente]` Resultado de clima, comparación y outfit.
-- `[pendiente]` Analítica histórica.
 
 Limitaciones: Wokwi simula el ambiente de origen; Open‑Meteo limita el rango futuro; el enlace de Pinterest abre un servicio externo; no hay autenticación multiusuario ni tiempo real por WebSockets.
